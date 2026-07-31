@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
+const qrcode = require('qrcode-terminal');
+const prefix = '!';
+
+const INFO_MSG = `
+💯 Commands Smooth Chal Rahi Hain
+⚡ Errors
+🔥 Downloaders Working
+🛠️ Group Features Improved
+🚀 Server Performance Stable
+
+👑 *BOT NAME:* FLASH-MD
+💻 *CREATED BY:* FLASHPOINT
+🔥 *POWERED FOR WHATSAPP USERS*`;
+
+async function connectToWhatsApp() {
+    const { state, saveCreds } = await useMultiFileAuthState('./auth');
+    const sock = makeWASocket({
+        auth: state,
+        printQRInTerminal: false // we handle QR ourselves
+    });
+
+    sock.ev.on('creds.update', saveCreds);
+
+    sock.ev.on('connection.update', (update) => {
+        const { connection, lastDisconnect, qr } = update;
+        if (qr) qrcode.generate(qr, { small: true });
+
+        if (connection === 'close') {
+            const shouldReconnect = (lastDisconnect.error)?.output?.statusCode!== DisconnectReason.loggedOut;
+            console.log('Connection closed. Reconnecting...', shouldReconnect);
+            if (shouldReconnect) connectToWhatsApp();
+        } else if (connection === 'open') {
+            console.log('✅ Connected to WhatsApp');
+        }
+    });
+
+    // ===== COMMANDS =====
+    const commands = {
+        // GENERAL
+        menu: (sock, from) => sock.sendMessage(from, {
+            text: `╔╦══• •✠•❀•✠ • •══╦╗
+PRIMENX-MD
+╚╩══• •✠•❀•✠ • •══╩╝
+
+▰▱▰▱▰▱▰▱▰▱▰▱▰▱
+❙🐬𝚘𝚠𝚗𝚎𝚛:FLASHPOINT-MD
+❙🗒️𝚌𝚘𝚖𝚖𝚊𝚗𝚍𝚜: ${Object.keys(commands).length}
+❙⏲️𝚁𝚞𝚗𝚝𝚒𝚖𝚎: ${process.uptime().toFixed(0)}s
+❙🗃️𝚙𝚛𝚎𝚏𝚒𝚡: ${prefix}
+❙📳𝚖𝚘𝚍𝚎: PUBLIC
+❙🍀𝚟𝚎𝚛𝚜ɪᴏɴ: 1.1.0
+
+▭▬▭▬❮MAIN❯▭▬▭▬
+> ➥ menu
+> ➥ ping
+> ➥ alive
+> ➥ owner
+> ➥ info
+> ➥ time
+
+▭▬▭▬❮DOWNLOAD❯▭▬▭▬
+> ➥ yt
+> ➥ tiktok
+> ➥ insta
+> ➥ fb
+> ➥ twitter
+
+▭▬▭▬❮GROUP❯▭▬▭▬
+> ➥ kick
+> ➥ add
+> ➥ promote
+> ➥ demote
+> ➥ tagall
+
+> 𖤍ᴘᴏᴡᴇʀᴇᴅ ʙʏ FLASHPOINT-MD`
+        }),
+        ping: (sock, from) => sock.sendMessage(from, { text: 'pong ⚡ FLASH-MD is online' }),
+        info: (sock, from) => sock.sendMessage(from, { text: INFO_MSG }),
+        alive: (sock, from) => sock.sendMessage(from, { text: '🔥 FLASH-MD is ALIVE and Running!' }),
+        time: (sock, from) => sock.sendMessage(from, { text: `🕐 Current Time: ${new Date().toLocaleTimeString()}` }),
+        owner: (sock, from) => sock.sendMessage(from, { text: '👑 *Creator:* FLASHPOINT\n*Bot:* FLASH-MD' }),
+        say: (sock, from, args) => {
+            if(!args[0]) return sock.sendMessage(from, { text: `Usage: ${prefix}say hello` });
+            sock.sendMessage(from, { text: args.join(' ') });
+        },
+
+        // DOWNLOADERS 🔥
+        yt: (sock, from, args) => sock.sendMessage(from, { text: `Downloading YouTube: ${args.join(' ')}` }),
+        tiktok: (sock, from, args) => sock.sendMessage(from, { text: `Downloading TikTok: ${args.join(' ')}` }),
+        insta: (sock, from, args) => sock.sendMessage(from, { text: `Downloading Instagram: ${args.join(' ')}` }),
+        fb: (sock, from, args) => sock.sendMessage(from, { text: `Downloading Facebook: ${args.join(' ')}` }),
+        twitter: (sock, from, args) => sock.sendMessage(from, { text: `Downloading Twitter: ${args.join(' ')}` }),
+
+        // GROUP FEATURES 🛠️
+        kick: (sock, from, args) => sock.sendMessage(from, { text: `Kicking @${args[0]}` }),
+        add: (sock, from, args) => sock.sendMessage(from, { text: `Adding ${args[0]}` }),
+        promote: (sock, from, args) => sock.sendMessage(from, { text: `Promoting @${args[0]}` }),
+        demote: (sock, from, args) => sock.sendMessage(from, { text: `Demoting @${args[0]}` }),
+        groupinfo: (sock, from) => sock.sendMessage(from, { text: `Group Info Loading...` }),
+        tagall: (sock, from) => sock.sendMessage(from, { text: `Tagging everyone...` }),
+
+        // FUN 💯
+        joke: (sock, from) => sock.sendMessage(from, { text: 'Why do programmers hate nature? Too many bugs 😂' }),
+        quote: (sock, from) => sock.sendMessage(from, { text: 'Success is not final, failure is not fatal.' }),
+        meme: (sock, from) => sock.sendMessage(from, { text: 'Sending meme...' }),
+        fact: (sock, from) => sock.sendMessage(from, { text: 'Did you know? Octopuses have 3 hearts.' }),
+
+        // TOOLS ⚡
+        sticker: (sock, from) => sock.sendMessage(from, { text: `Send an image with ${prefix}sticker to convert` }),
+        toimg: (sock, from) => sock.sendMessage(from, { text: `Reply to sticker with ${prefix}toimg` }),
+        translate: (sock, from, args) => sock.sendMessage(from, { text: `Translating: ${args.join(' ')}` }),
+        weather: (sock, from, args) => sock.sendMessage(from, { text: `Weather for: ${args.join(' ')}` }),
+    };
+
+    sock.ev.on('messages.upsert', async (m) => {
+        const msg = m.messages[0];
+        if (!msg.message || msg.key.fromMe) return;
+
+        const messageType = Object.keys(msg.message)[0];
+        const text = msg.message.conversation || msg.message.extendedTextMessage?.text || '';
+        const from = msg.key.remoteJid;
+        if (!text.startsWith(prefix)) return;
+
+        const args = text.slice(prefix.length).trim().split(/ +/);
+        const commandName = args.shift().toLowerCase();
+
+        if (commands[commandName]) {
+            try {
+                await commands[commandName](sock, from, args);
+            } catch (err) {
+                console.error(err);
+                await sock.sendMessage(from, { text: `❌ Error executing command` });
+            }
+        } else {
+            await sock.sendMessage(from, { text: `❌ Command not found. Type ${prefix}menu` });
+        }
+    });
+}
+
+connectToWhatsApp();
+<script src="script.js"></script>
+</body>
+</html>
